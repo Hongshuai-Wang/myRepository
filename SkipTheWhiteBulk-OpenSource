@@ -1,0 +1,263 @@
+// TipTheWhite.cpp : Defines the entry point for the application.
+//
+
+#include "framework.h"
+#include "TipTheWhite.h"
+#include "stdlib.h"
+#include "time.h"
+#include "tchar.h"
+
+#define MAX_LOADSTRING 100
+#define BLOCK 70
+
+// Global Variables:
+HINSTANCE hInst;                                // current instance
+WCHAR szTitle[MAX_LOADSTRING]=TEXT("Stand_on_Black");                  // The title bar text
+WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+
+// Forward declarations of functions included in this code module:
+ATOM                MyRegisterClass(HINSTANCE hInstance);
+BOOL                InitInstance(HINSTANCE, int);
+LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
+INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
+                     _In_opt_ HINSTANCE hPrevInstance,
+                     _In_ LPWSTR    lpCmdLine,
+                     _In_ int       nCmdShow)
+{
+    UNREFERENCED_PARAMETER(hPrevInstance);
+    UNREFERENCED_PARAMETER(lpCmdLine);
+
+    // TODO: Place code here.
+
+    // Initialize global strings
+    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+    LoadStringW(hInstance, IDC_TIPTHEWHITE, szWindowClass, MAX_LOADSTRING);
+    MyRegisterClass(hInstance);
+
+    // Perform application initialization:
+    if (!InitInstance (hInstance, nCmdShow))
+    {
+        return FALSE;
+    }
+
+    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_TIPTHEWHITE));
+
+    MSG msg;
+
+    // Main message loop:
+    while (GetMessage(&msg, nullptr, 0, 0))
+    {
+        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }
+
+    return (int) msg.wParam;
+}
+
+//
+//  FUNCTION: MyRegisterClass()
+//
+//  PURPOSE: Registers the window class.
+//
+ATOM MyRegisterClass(HINSTANCE hInstance)
+{
+    WNDCLASSEXW wcex;
+	// TCHAR szWindowClass[] = TEXT("GUI_Function");
+    wcex.cbSize = sizeof(WNDCLASSEX);
+
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = WndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = hInstance;
+    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TIPTHEWHITE));
+    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
+    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_TIPTHEWHITE);
+    wcex.lpszClassName  = szWindowClass;
+    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+
+    return RegisterClassExW(&wcex);
+}
+
+//
+//   FUNCTION: InitInstance(HINSTANCE, int)
+//
+//   PURPOSE: Saves instance handle and creates main window
+//
+//   COMMENTS:
+//
+//        In this function, we save the instance handle in a global variable and
+//        create and display the main program window.
+//
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+{
+   hInst = hInstance; // Store instance handle in our global variable
+
+   HWND hWnd = CreateWindowW(szWindowClass, TEXT("小心你的脚"), WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+      200, 0, 8 * BLOCK + 17, 8 * BLOCK + 60, nullptr, nullptr, hInstance, nullptr);
+   /*HWND hWnd = CreateWindowW(szAppClassName, // 窗口类型名
+	   TEXT("小心你的脚"),// 窗口标题
+	   WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+	   200, 100, // 窗口左上角横坐标
+	   8 * BLOCK + 17, 8 * BLOCK + 80, // 窗口的宽和高
+	   nullptr, // 父窗口句柄
+	   nullptr, // 菜单句柄
+	   hInstance, // 应用程序实例句柄
+	   nullptr // 参数
+		);
+		*/
+   if (!hWnd)
+   {
+      return FALSE;
+   }
+
+   ShowWindow(hWnd, nCmdShow);
+   UpdateWindow(hWnd);
+
+   return TRUE;
+}
+
+//
+//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
+//
+//  PURPOSE: Processes messages for the main window.
+//
+//	WM_CREATE	- Create window
+//  WM_COMMAND  - process the application menu
+//  WM_PAINT    - Paint the main window
+//  WM_DESTROY  - post a quit message and return
+//
+//
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	static int bw[8]; // 每一屏有四个黑块
+	POINT point; // 鼠标点击坐标
+	static int n = 0; // 总共踩的格子数
+	static int tm = 0; // 时间统计
+
+    switch (message)
+    {
+	case WM_CREATE:
+		{
+			srand((unsigned)time(NULL));
+			for (int i=0;i<8;i++)
+			{
+				bw[i] = rand() % 8;
+			}
+			// 开启计时器
+			tm = SetTimer(hWnd,1,10,NULL); // 10ms计时一次
+		}
+		break;
+    case WM_COMMAND:
+        {
+            int wmId = LOWORD(wParam);
+            // Parse the menu selections:
+            switch (wmId)
+            {
+            case IDM_ABOUT:
+                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+                break;
+            case IDM_EXIT:
+                DestroyWindow(hWnd);
+                break;
+            default:
+                return DefWindowProc(hWnd, message, wParam, lParam);
+            }
+        }
+        break;
+    case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hWnd, &ps);
+			
+			RECT rect;  // 矩形区域
+			HBRUSH hBrush; // 画刷句柄
+
+            // TODO: Add any drawing code that uses hdc here...
+			// Draw Meshes
+			for (int i = 0; i < 9; i++)
+			{	// 水平线
+				MoveToEx(hdc, 0, i * BLOCK, NULL);//起点
+				LineTo(hdc, 8 * BLOCK, i * BLOCK);
+
+				// 竖直线
+				MoveToEx(hdc, i * BLOCK, 0, NULL);//起点
+				LineTo(hdc, i * BLOCK, 8 * BLOCK);
+			}
+			//  Draw black mesh
+			for (int i = 0; i < 8; i++)
+			{
+				SetRect(&rect, bw[i] * BLOCK, i * BLOCK, bw[i] * BLOCK + BLOCK, i * BLOCK + BLOCK);
+				hBrush = CreateSolidBrush(RGB(255, 255, 0));
+				SelectObject(hdc, hBrush);
+				Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
+				// 释放资源
+				DeleteObject(hBrush);
+			}
+			
+			EndPaint(hWnd, &ps);
+        }
+        break;
+	// 按鼠标左键控制
+	case WM_LBUTTONDOWN:
+		{
+		point.x = LOWORD(lParam);
+		point.y = HIWORD(lParam);
+
+		if ( point.y < 7 * BLOCK)
+		{
+			MessageBox(hWnd, L"点错行了，啊啊啊！！！", L"FBI_Warnning !", MB_OK);
+		}
+		if (point.x / BLOCK != bw[7] && point.y >= 7* BLOCK)
+		{
+			MessageBox(hWnd, L"眼瞎啊，点到白的了！！", L"FBI_Warnning !", MB_OK);
+		}
+		// 黑块的随机数更新
+		for (int i=7; i>=1;i--)
+		{
+			bw[i] = bw[i - 1];
+		}
+		bw[0] = rand() % 8;
+		n++;
+		// 滚动窗口
+		ScrollWindow(hWnd, 0, BLOCK, NULL,NULL);
+
+		}
+		break;
+	// 按键盘控制
+	//case WM_KEYDOWN:
+	//	break;
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+    default:
+        return DefWindowProc(hWnd, message, wParam, lParam);
+    }
+    return 0;
+}
+
+// Message handler for about box.
+INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    UNREFERENCED_PARAMETER(lParam);
+    switch (message)
+    {
+    case WM_INITDIALOG:
+        return (INT_PTR)TRUE;
+
+    case WM_COMMAND:
+        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
+        {
+            EndDialog(hDlg, LOWORD(wParam));
+            return (INT_PTR)TRUE;
+        }
+        break;
+    }
+    return (INT_PTR)FALSE;
+}
