@@ -1,5 +1,6 @@
 // TipTheWhite.cpp : Defines the entry point for the application.
-//
+// 这是一个“别踩白块”游戏的代码，当然不是最完美的版本，里面还有大量的缺陷，但是至少可以运行，虽然是照着视频教学敲的，但又不完全一样。
+// 这也是我拿来练手的第一个最简单的游戏代码，现在还不是很懂，相信练得多了就会了，继续加油吧！
 
 #include "framework.h"
 #include "TipTheWhite.h"
